@@ -127,6 +127,9 @@
 
     // trigger success response
     [self success];
+    
+    // Disable show "open pdf with ..." menu
+    return;
 
     // show "open pdf with ..." menu
     NSURL* url = [NSURL fileURLWithPath:filePath];
