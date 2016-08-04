@@ -7,10 +7,10 @@ var exec = require('cordova/exec');
 
 var Html2pdf =
 {
-    create : function( html, filePath, success, error )
+    create : function( html, filePath, options, success, error )
     {
-        exec(success, error, "Html2pdf", "create", [html, filePath])
+        exec(success, error, "Html2pdf", "create", [html, filePath, options]);
     }
-}
+};
 
 module.exports = Html2pdf;

@@ -25,6 +25,16 @@
 
 #import "Html2pdf.h"
 
+static NSString *topLeft;
+static NSString *topRight;
+static NSString *bottomLeft;
+static NSString *bottomRight;
+static NSString *bottomLeftTemplate;
+static NSString *bottomRightTemplate;
+static int topMargin;
+static int bottomMargin;
+
+
 @interface Html2pdf (Private)
 
 - (BOOL) saveHtml:(NSString*)html asPdf:(NSString*)filePath;
@@ -39,34 +49,44 @@
 
 @implementation Html2pdf
 
+static NSDictionary *overlayOptions;
+
 @synthesize command, filePath, pageSize, pageMargins, documentController;
 
 - (void)create:(CDVInvokedUrlCommand*)command
 {
     self.command = command;
-    
+
     NSArray* arguments = command.arguments;
 
     NSLog(@"Creating pdf from html has been started.");
-    
+
     NSString* html = [arguments objectAtIndex:0];
     self.filePath  = [[arguments objectAtIndex:1] stringByExpandingTildeInPath];
-    
+    NSDictionary* options = [arguments objectAtIndex:2];
+
+    topLeft = [options objectForKey:@"topLeft"];
+    topRight = [options objectForKey:@"topRight"];
+    bottomLeftTemplate = [options objectForKey:@"bottomLeft"];
+    bottomRightTemplate = [options objectForKey:@"bottomRight"];
+    topMargin = [[options objectForKey:@"topMargin"] floatValue];
+    bottomMargin = [[options objectForKey:@"bottomMargin"] floatValue];
+
     // Set the base URL to be the www directory.
     NSString* wwwFilePath = [[NSBundle mainBundle] pathForResource:@"www" ofType:nil];
     NSURL*    baseURL     = [NSURL fileURLWithPath:wwwFilePath];
-    
+
     // define page size and margins
     self.pageSize = kPaperSizeA4;
-    self.pageMargins = UIEdgeInsetsMake(10, 5, 10, 5);
-    
+    self.pageMargins = UIEdgeInsetsMake(0, 5, 0, 5);
+
     // Load page into a webview and use its formatter to print the page
     UIWebView* webPage    = [[UIWebView alloc] init];
     webPage.delegate = self;
     webPage.frame = CGRectMake(0, 0, 1, 1); // Make web view small ...
     webPage.alpha = 0.0;                    // ... and invisible.
     [self.webView.superview addSubview:webPage];
-    
+
     [webPage loadHTMLString:html baseURL:baseURL];
 }
 
@@ -74,11 +94,11 @@
 {
     NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did succeed (%@)", self.filePath];
     NSLog(@"%@",resultMsg);
-    
+
     // create acordova result
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                                 messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-    
+
     // send cordova result
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
@@ -87,37 +107,39 @@
 {
     NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did fail (%@)", message];
     NSLog(@"%@",resultMsg);
-    
+
     // create cordova result
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
                                                 messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-    
+
     // send cordova result
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
-    NSLog(@"Html2Pdf webViewDidFinishLoad");
-    
+    NSLog(@"Html2Pdf webViewDidFinishLoad %f", pageMargins.top);
+
     UIPrintPageRenderer *render = [[UIPrintPageRenderer alloc] init];
-    
+    render.headerHeight = topMargin;
+    render.footerHeight = bottomMargin;
+
     [render addPrintFormatter:webView.viewPrintFormatter startingAtPageAtIndex:0];
-    
+
     CGRect printableRect = CGRectMake(self.pageMargins.left,
                                       self.pageMargins.top,
                                       self.pageSize.width - self.pageMargins.left - self.pageMargins.right,
                                       self.pageSize.height - self.pageMargins.top - self.pageMargins.bottom);
-    
+
     CGRect paperRect = CGRectMake(0, 0, self.pageSize.width, self.pageSize.height);
-    
+
     [render setValue:[NSValue valueWithCGRect:paperRect] forKey:@"paperRect"];
     [render setValue:[NSValue valueWithCGRect:printableRect] forKey:@"printableRect"];
-    
+
     if (filePath) {
         [[render printToPDF] writeToFile: filePath atomically: YES];
     }
-    
+
 
     // remove webPage
     [webView stopLoading];
@@ -127,7 +149,7 @@
 
     // trigger success response
     [self success];
-    
+
     // Disable show "open pdf with ..." menu
     return;
 
@@ -142,10 +164,10 @@
     rect.size.height *= 0.02;
 
     BOOL isValid = [documentController presentOpenInMenuFromRect:rect inView:view animated:YES];
-    
+
     if (!isValid) {
         NSString* messageString = [NSString stringWithFormat:@"No PDF reader was found on your device. Please download a PDF reader (eg. iBooks or Acrobat)."];
-        
+
         UIAlertView* alertView = [[UIAlertView alloc] initWithTitle:@"Error" message:messageString delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
         [alertView show];
         //[alertView release]; // p. leak
@@ -156,37 +178,124 @@
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     NSLog(@"webViewDidFailLoadWithError");
-    
+
     // trigger error response
     [self error:[error description]];
 }
-
 
 @end
 
 
 @implementation UIPrintPageRenderer (PDF)
 
+
 - (NSData*) printToPDF
 {
     NSMutableData *pdfData = [NSMutableData data];
-    
+
     UIGraphicsBeginPDFContextToData( pdfData, self.paperRect, nil );
-    
+
     [self prepareForDrawingPages: NSMakeRange(0, self.numberOfPages)];
-    
+
     CGRect bounds = UIGraphicsGetPDFContextBounds();
-    
+
+    NSLog(@"printToPDF with pages %ld", self.numberOfPages);
+    NSString *pageNumber;
+    NSString *pagesCount = [NSString stringWithFormat:@"%d", self.numberOfPages];
+
     for ( int i = 0 ; i < self.numberOfPages ; i++ )
     {
         UIGraphicsBeginPDFPage();
-        
+
+        NSString *pageNumber = [NSString stringWithFormat:@"%d", i+1];
+        bottomLeft = [bottomLeftTemplate stringByReplacingOccurrencesOfString:@"{{item_num}}"
+                                                           withString:pageNumber
+                      ];
+        bottomRight = [bottomRightTemplate stringByReplacingOccurrencesOfString:@"{{item_num}}"
+                                                           withString:pageNumber
+                      ];
+        bottomLeft = [bottomLeft stringByReplacingOccurrencesOfString:@"{{item_count}}"
+                                                                   withString:pagesCount
+                      ];
+        bottomRight = [bottomRight stringByReplacingOccurrencesOfString:@"{{item_count}}"
+                                                                    withString:pagesCount
+                       ];
+
         [self drawPageAtIndex: i inRect: bounds];
+        [self drawHeaderForPageAtIndex: i inRect: bounds];
+        [self drawFooterForPageAtIndex: i inRect: bounds];
+
     }
-    
+
     UIGraphicsEndPDFContext();
-    
+
     return pdfData;
+}
+
+- (void)drawHeaderForPageAtIndex:(NSInteger)pageIndex
+                          inRect:(CGRect)headerRect {
+
+    NSMutableParagraphStyle *textStyle = [[NSMutableParagraphStyle defaultParagraphStyle] mutableCopy];
+    textStyle.lineBreakMode = NSLineBreakByWordWrapping;
+
+    NSDictionary *attributes = @{
+        NSFontAttributeName            : [UIFont systemFontOfSize:12],
+        NSParagraphStyleAttributeName  : textStyle,
+        NSForegroundColorAttributeName : [UIPrintPageRenderer colorFromHexString:@"#575759"],
+        NSBackgroundColorAttributeName : [UIColor clearColor]
+    };
+
+    if (topLeft) {
+        CGPoint drawPoint = CGPointMake(10, 10);
+        [topLeft drawAtPoint:drawPoint withAttributes:attributes];
+    }
+    if (topRight) {
+        CGSize size = [topRight sizeWithAttributes:attributes];
+        CGPoint drawPoint = CGPointMake(CGRectGetMaxX(headerRect) - size.width - 10, 10);
+        [topRight drawAtPoint:drawPoint withAttributes:attributes];
+    }
+    textStyle = nil;
+    attributes = nil;
+}
+
+- (void)drawFooterForPageAtIndex:(NSInteger)pageIndex
+                          inRect:(CGRect)footerRect {
+
+    NSMutableParagraphStyle *textStyle = [[NSMutableParagraphStyle defaultParagraphStyle] mutableCopy];
+    textStyle.lineBreakMode = NSLineBreakByWordWrapping;
+
+    NSDictionary *attributes = @{
+        NSFontAttributeName            : [UIFont systemFontOfSize:12],
+        NSParagraphStyleAttributeName  : textStyle,
+        NSForegroundColorAttributeName : [UIPrintPageRenderer colorFromHexString:@"#575759"],
+        NSBackgroundColorAttributeName : [UIColor clearColor]
+    };
+
+    if (bottomLeft) {
+        CGSize size = [bottomRight sizeWithAttributes:attributes];
+        CGFloat drawY = CGRectGetMaxY(footerRect) - size.height - 10;
+        CGPoint drawPoint = CGPointMake(10, drawY);
+        [bottomLeft drawAtPoint:drawPoint withAttributes:attributes];
+    }
+    if (bottomRight) {
+        CGSize size = [bottomRight sizeWithAttributes:attributes];
+        CGFloat drawX = CGRectGetMaxX(footerRect) - size.width - 10;
+        CGFloat drawY = CGRectGetMaxY(footerRect) - size.height - 10;
+        CGPoint drawPoint = CGPointMake(drawX, drawY);
+        [bottomRight drawAtPoint:drawPoint withAttributes:attributes];
+    }
+
+    textStyle = nil;
+    attributes = nil;
+}
+
+// Assumes input like "#00FF00" (#RRGGBB).
++ (UIColor *)colorFromHexString:(NSString *)hexString {
+    unsigned rgbValue = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:hexString];
+    [scanner setScanLocation:1]; // bypass '#' character
+    [scanner scanHexInt:&rgbValue];
+    return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 green:((rgbValue & 0xFF00) >> 8)/255.0 blue:(rgbValue & 0xFF)/255.0 alpha:1.0];
 }
 
 @end
