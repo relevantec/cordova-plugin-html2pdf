@@ -12,7 +12,6 @@ cordova.define("at.modalog.cordova.plugin.html2pdf.Html2pdf", function (require,
         },
 
         mergePDFs: function (filePath, files, success, error) {
-            console.log('exex some cordova plugin please');
             exec(success, error, "Html2pdf", "mergePDFs", [filePath, files]);
         }
     };
