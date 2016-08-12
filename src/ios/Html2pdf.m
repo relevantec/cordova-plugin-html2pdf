@@ -144,6 +144,9 @@ static int bottomMargin;
                 CFRelease(inputURL);
                 CGPDFDocumentRelease(inputREF);
                 [fileManager removeItemAtPath:input error:&error];
+                input = nil;
+                inputURL = nil;
+                inputREF = nil;
             }
         }
 
@@ -151,7 +154,7 @@ static int bottomMargin;
         CGPDFContextClose(writeContext);
         CGContextRelease(writeContext);
         CFRelease(outputURL);
-        input = nil;
+
         fileManager = nil;
         error = nil;
 
@@ -161,28 +164,32 @@ static int bottomMargin;
 
 - (void)success
 {
-    NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did succeed (%@)", self.filePath];
-    // NSLog(@"%@",resultMsg);
+    @autoreleasepool {
+        NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did succeed (%@)", self.filePath];
+        // NSLog(@"%@",resultMsg);
 
-    // create acordova result
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+        // create acordova result
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                    messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
 
-    // send cordova result
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        // send cordova result
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }
 }
 
 - (void)error:(NSString*)message
 {
-    NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did fail (%@)", message];
-    // NSLog(@"%@",resultMsg);
+    @autoreleasepool {
+        NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did fail (%@)", message];
+        // NSLog(@"%@",resultMsg);
 
-    // create cordova result
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                                messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+        // create cordova result
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                                    messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
 
-    // send cordova result
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        // send cordova result
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }
 }
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView
@@ -215,6 +222,7 @@ static int bottomMargin;
         webView.delegate = nil;
         [webView removeFromSuperview];
         webView = nil;
+        render = nil;
 
         // trigger success response
         [self success];
@@ -260,40 +268,42 @@ static int bottomMargin;
 
 - (NSData*) printToPDF
 {
-    NSMutableData *pdfData = [NSMutableData data];
+    @autoreleasepool {
+        NSMutableData *pdfData = [NSMutableData data];
 
-    UIGraphicsBeginPDFContextToData( pdfData, self.paperRect, nil );
+        UIGraphicsBeginPDFContextToData( pdfData, self.paperRect, nil );
 
-    [self prepareForDrawingPages: NSMakeRange(0, self.numberOfPages)];
+        [self prepareForDrawingPages: NSMakeRange(0, self.numberOfPages)];
 
-    CGRect bounds = UIGraphicsGetPDFContextBounds();
+        CGRect bounds = UIGraphicsGetPDFContextBounds();
 
-    NSString *pagesCount = [NSString stringWithFormat:@"%i", (int) self.numberOfPages];
+        for ( int i = 0 ; i < self.numberOfPages ; i++ )
+        {
+            @autoreleasepool {
+                UIGraphicsBeginPDFPage();
+                itemCount++;
 
-    for ( int i = 0 ; i < self.numberOfPages ; i++ )
-    {
-        @autoreleasepool {
-            UIGraphicsBeginPDFPage();
-            itemCount++;
+                NSString *pageNumber = [NSString stringWithFormat:@"%d", itemCount];
+                bottomLeft = [bottomLeftTemplate stringByReplacingOccurrencesOfString:@"{{item_num}}"
+                                                                   withString:pageNumber
+                              ];
+                bottomRight = [bottomRightTemplate stringByReplacingOccurrencesOfString:@"{{item_num}}"
+                                                                   withString:pageNumber
+                              ];
 
-            NSString *pageNumber = [NSString stringWithFormat:@"%d", itemCount];
-            bottomLeft = [bottomLeftTemplate stringByReplacingOccurrencesOfString:@"{{item_num}}"
-                                                               withString:pageNumber
-                          ];
-            bottomRight = [bottomRightTemplate stringByReplacingOccurrencesOfString:@"{{item_num}}"
-                                                               withString:pageNumber
-                          ];
+                [self drawPageAtIndex: i inRect: bounds];
+                [self drawHeaderForPageAtIndex: i inRect: bounds];
+                [self drawFooterForPageAtIndex: i inRect: bounds];
+            }
 
-            [self drawPageAtIndex: i inRect: bounds];
-            [self drawHeaderForPageAtIndex: i inRect: bounds];
-            [self drawFooterForPageAtIndex: i inRect: bounds];
         }
 
+        UIGraphicsEndPDFContext();
+
+        return pdfData;
+
+        pdfData = nil;
     }
-
-    UIGraphicsEndPDFContext();
-
-    return pdfData;
 }
 
 - (void)drawHeaderForPageAtIndex:(NSInteger)pageIndex
@@ -359,11 +369,13 @@ static int bottomMargin;
 
 // Assumes input like "#00FF00" (#RRGGBB).
 + (UIColor *)colorFromHexString:(NSString *)hexString {
-    unsigned rgbValue = 0;
-    NSScanner *scanner = [NSScanner scannerWithString:hexString];
-    [scanner setScanLocation:1]; // bypass '#' character
-    [scanner scanHexInt:&rgbValue];
-    return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 green:((rgbValue & 0xFF00) >> 8)/255.0 blue:(rgbValue & 0xFF)/255.0 alpha:1.0];
+    @autoreleasepool {
+        unsigned rgbValue = 0;
+        NSScanner *scanner = [NSScanner scannerWithString:hexString];
+        [scanner setScanLocation:1]; // bypass '#' character
+        [scanner scanHexInt:&rgbValue];
+        return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 green:((rgbValue & 0xFF00) >> 8)/255.0 blue:(rgbValue & 0xFF)/255.0 alpha:1.0];
+    }
 }
 
 @end
