@@ -59,7 +59,7 @@ static int bottomMargin;
 
         NSArray* arguments = cmd.arguments;
 
-        // NSLog(@"Creating pdf from html has been started.");
+        NSLog(@"Creating pdf from html has been started.");
 
         NSString* html = [arguments objectAtIndex:0];
         self.filePath  = [[arguments objectAtIndex:1] stringByExpandingTildeInPath];
@@ -131,7 +131,7 @@ static int bottomMargin;
                 // Read the first PDF and generate the output pages
                 for (j = 1; j <= inputPages; j++) {
                     @autoreleasepool {
-                        // NSLog(@"prcesing %i %i", i, j);
+                        NSLog(@"prcesing %i %i", i, j);
                         page = CGPDFDocumentGetPage(inputREF, j);
                         mediaBox = CGPDFPageGetBoxRect(page, kCGPDFMediaBox);
                         CGContextBeginPage(writeContext, &mediaBox);
@@ -161,38 +161,34 @@ static int bottomMargin;
 
 - (void)success
 {
-    @autoreleasepool {
-        NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did succeed (%@)", self.filePath];
-        // NSLog(@"%@",resultMsg);
+    NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did succeed (%@)", self.filePath];
+    // NSLog(@"%@",resultMsg);
 
-        // create acordova result
-        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                    messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+    // create acordova result
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
 
-        // send cordova result
-        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-    }
+    // send cordova result
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)error:(NSString*)message
 {
-    @autoreleasepool {
-        NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did fail (%@)", message];
-        // NSLog(@"%@",resultMsg);
+    NSString* resultMsg = [NSString stringWithFormat:@"HTMLtoPDF did fail (%@)", message];
+    // NSLog(@"%@",resultMsg);
 
-        // create cordova result
-        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                                    messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+    // create cordova result
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                                messageAsString:[resultMsg stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
 
-        // send cordova result
-        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-    }
+    // send cordova result
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     @autoreleasepool {
-        // NSLog(@"Html2Pdf webViewDidFinishLoad");
+        NSLog(@"Html2Pdf webViewDidFinishLoad");
 
         UIPrintPageRenderer *render = [[UIPrintPageRenderer alloc] init];
         render.headerHeight = topMargin;
@@ -287,12 +283,6 @@ static int bottomMargin;
             bottomRight = [bottomRightTemplate stringByReplacingOccurrencesOfString:@"{{item_num}}"
                                                                withString:pageNumber
                           ];
-            bottomLeft = [bottomLeft stringByReplacingOccurrencesOfString:@"{{item_count}}"
-                                                                       withString:pagesCount
-                          ];
-            bottomRight = [bottomRight stringByReplacingOccurrencesOfString:@"{{item_count}}"
-                                                                        withString:pagesCount
-                           ];
 
             [self drawPageAtIndex: i inRect: bounds];
             [self drawHeaderForPageAtIndex: i inRect: bounds];
