@@ -29,9 +29,35 @@
                 <param name="android-package" value="at.modalog.cordova.plugin.html2pdf.Html2pdf"/>
             </feature>
         </config-file>
-
         <source-file src="src/android/libs/iText-4.2.0-com.itextpdf.jar" target-dir="libs" />
         <source-file src="src/android/Html2pdf.java" target-dir="src/at/modalog/cordova/plugin/html2pdf" />
+        <source-file src="src/android/FileUtils.java" target-dir="src/at/modalog/cordova/plugin/html2pdf" />
+        <source-file src="src/android/Program.java" target-dir="src/at/modalog/cordova/plugin/html2pdf" />
+        <source-file src="src/android/com/easypdfcloud/ApiAuthorizationException.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/Base64Decode.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/Client.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/CreditsInfo.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/EasyPdfCloudApiException.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/FileData.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/FileMetadata.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/HttpConnectionManager.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/HttpResponseUtils.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/Job.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/JobError.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/JobExecutionException.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/JobExecutionResult.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/JobInfo.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/JobInfoDetail.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/LocalFileTokenManager.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/LogUtils.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/OAuth2HttpConnectionManager.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/OAuth2TokenManager.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/RestApi.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/RestApiImpl.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/TokenInfo.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/UrlInfo.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/WorkflowInfo.java" target-dir="src/com/easypdfcloud" />
+        <source-file src="src/android/com/easypdfcloud/WwwAuthenticate.java" target-dir="src/com/easypdfcloud" />
     </platform>
     
     <!-- ios -->
