@@ -100,7 +100,7 @@ public class Html2pdf extends CordovaPlugin {
                     File file;
                     List<String> pages = new ArrayList<String>();
 
-                    for (int i = 0; i < (int) Math.min(files.length(), 6); i++) {
+                    for (int i = 0; i < (int) Math.min(files.length(), 10); i++) {
                         pages.add(FileUtils.renameFileExtension(cordova.getActivity().getApplicationContext().getExternalCacheDir() + "/" + publicTmpDir + "/" + files.getString(i), "html"));
                     }
 
@@ -114,6 +114,9 @@ public class Html2pdf extends CordovaPlugin {
                         outputFile.renameTo(new File(path + "/" + outputName));
                     } catch (IOException e) {
                         e.printStackTrace();
+                        PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getMessage());
+                        result.setKeepCallback(false);
+                        callbackContext.sendPluginResult(result);
                     }
 
                     PluginResult result;
