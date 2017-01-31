@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.cordova.CallbackContext;
@@ -112,6 +113,12 @@ public class Html2pdf extends CordovaPlugin {
                         File outputFile = new File(outputFilePath);
                         String path = outputFile.getAbsolutePath().substring(0, outputFile.getAbsolutePath().lastIndexOf(File.separator));
                         outputFile.renameTo(new File(path + "/" + outputName));
+
+                        Iterator<String> pagesIterator = pages.iterator();
+                        while (pagesIterator.hasNext()) {
+                            file = new File(pagesIterator.next());
+                            if (file.exists()) file.delete();
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                         PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getMessage());
