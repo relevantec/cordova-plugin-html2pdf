@@ -57,6 +57,7 @@ public class Html2pdf extends CordovaPlugin {
     // change your path on the sdcard here
     private String publicTmpDir = "leandigitalsolutions"; // prepending a dot "." would make it hidden
     private String tmpPdfName = "print.pdf";
+    private static final int MAX_NUMBER_OF_FILES_THAT_CAN_BE_PROCESSED_AT_ONCE = 10;
 
     // set to true to see the webview (useful for debugging)
     private final boolean showWebViewForDebugging = false;
@@ -101,7 +102,7 @@ public class Html2pdf extends CordovaPlugin {
                     File file;
                     List<String> pages = new ArrayList<String>();
 
-                    for (int i = 0; i < (int) Math.min(files.length(), 10); i++) {
+                    for (int i = 0; i < (int) Math.min(files.length(), MAX_NUMBER_OF_FILES_THAT_CAN_BE_PROCESSED_AT_ONCE); i++) {
                         pages.add(FileUtils.renameFileExtension(cordova.getActivity().getApplicationContext().getExternalCacheDir() + "/" + publicTmpDir + "/" + files.getString(i), "html"));
                     }
 
