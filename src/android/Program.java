@@ -78,7 +78,7 @@ public class Program {
     // If true is specified, then the job is executed as a test mode and
     // your API credit will not be used.
     //
-    static final boolean enableTestMode = true;
+    static final boolean enableTestMode = false;
     
     // Full path of the input file which you want to upload and process
     // This value is used only if the workflowIncludesCombinePdfsTask == false
