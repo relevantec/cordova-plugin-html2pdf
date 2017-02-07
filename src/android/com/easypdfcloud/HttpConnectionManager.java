@@ -59,8 +59,8 @@ public class HttpConnectionManager {
         URL urlObject = new URL(url);
         HttpURLConnection connection = (HttpURLConnection)urlObject.openConnection(this.proxy);
 
-        connection.setConnectTimeout(30 * 1000);
-        connection.setReadTimeout(30 * 1000);
+        connection.setConnectTimeout(80 * 1000);
+        connection.setReadTimeout(80 * 1000);
         connection.setUseCaches(false);
         connection.setAllowUserInteraction(false);
         connection.setInstanceFollowRedirects(true);
