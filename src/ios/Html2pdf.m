@@ -48,8 +48,36 @@ static NSString *bottomRightTemplate;
 static int itemCount = 0;
 static int topMargin;
 static int bottomMargin;
+static UIImage *logoImage;
 
 @synthesize command, filePath, pageSize, pageMargins, documentController;
+
+
+
+/**
+ Loads the given file as an UIImage.
+ @param path the file path, either relative to www/ or absolute ("/...")
+ @return the UIImage, or nil if file cannot be loaded
+ */
++ (UIImage*)loadImageAtPath:(NSString *)path
+{
+    path = [self _expandSourcePath:path];
+    return (path != nil) ? [UIImage imageWithContentsOfFile:path] : nil;
+}
+
++ (NSString*)_expandSourcePath:(NSString *)path
+{
+    if (path) {
+        path = [path stringByExpandingTildeInPath];
+        if (![path isAbsolutePath]) {
+            path = [[[[NSBundle mainBundle] resourcePath]
+                     stringByAppendingPathComponent:@"www"]
+                    stringByAppendingPathComponent:path];
+        }
+        return path;
+    }
+    return nil;
+}
 
 - (void)create:(CDVInvokedUrlCommand*)cmd
 {
@@ -75,6 +103,9 @@ static int bottomMargin;
         if (![[options objectForKey:@"keepCounter"] boolValue]) {
             itemCount = 0;
         }
+        
+        logoImage = [Html2pdf loadImageAtPath:[[[NSBundle mainBundle] resourcePath]
+                                                         stringByAppendingPathComponent:[options objectForKey:@"logo"]]];
 
         // Set the base URL to be the www directory.
         NSString* wwwFilePath = [[NSBundle mainBundle] pathForResource:@"www" ofType:nil];
@@ -299,7 +330,7 @@ static int bottomMargin;
         }
 
         UIGraphicsEndPDFContext();
-
+        logoImage = nil;
         return pdfData;
 
         pdfData = nil;
@@ -321,7 +352,7 @@ static int bottomMargin;
         };
 
         if (topLeft) {
-            CGPoint drawPoint = CGPointMake(10, 10);
+            CGPoint drawPoint = CGPointMake(41, 10);
             [topLeft drawAtPoint:drawPoint withAttributes:attributes];
         }
         if (topRight) {
@@ -329,6 +360,8 @@ static int bottomMargin;
             CGPoint drawPoint = CGPointMake(CGRectGetMaxX(headerRect) - size.width - 10, 10);
             [topRight drawAtPoint:drawPoint withAttributes:attributes];
         }
+        
+        [logoImage drawInRect:CGRectMake(0, 0, 40, 47)];
         textStyle = nil;
         attributes = nil;
     }
